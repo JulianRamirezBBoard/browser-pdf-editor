@@ -1,0 +1,457 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   Pre-press desk. One stylesheet.
+   1. @theme      design tokens (Tailwind builds utilities from these)
+   2. @layer base reset, runtime dark theme, page shell
+   3. @layer components  patterns used many times, or ones that
+      utilities cannot express (buttons, the page list, the proof)
+   4. signature  crop marks, the registration target, the load
+      sequence. Plain CSS on purpose.
+   Layout lives as Tailwind utilities in the components.
+   ============================================================ */
+
+@theme {
+  --font-display:
+    'Bricolage Grotesque Variable', 'Bricolage Grotesque', 'Space Grotesk',
+    'Segoe UI', system-ui, sans-serif;
+  --font-sans:
+    'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --font-mono:
+    'IBM Plex Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+  --color-paper: #fcfcfa;
+  --color-pasteboard: #e6e7e9;
+  --color-panel: #f1f2f3;
+  --color-panel-2: #fafaf9;
+
+  --color-ink: #16181b;
+  --color-ink-muted: #4c5157;
+  --color-chrome: #22262b;
+  --color-chrome-muted: #5c616a;
+  --color-heading: #181a1d;
+
+  --color-rule: #cbced2;
+  --color-rule-strong: #a6abb2;
+  --color-cropmark: #1b1d20;
+
+  --color-cyan: #0a6e92;
+  --color-cyan-line: #4fa5c4;
+  --color-cyan-tint: #e4f1f6;
+  --color-on-cyan: #ffffff;
+
+  --color-magenta: #b0146f;
+  --color-magenta-tint: #f8e5f0;
+  --color-on-magenta: #ffffff;
+
+  --shadow-page:
+    0 1px 2px rgba(20, 22, 26, 0.1), 0 14px 30px -14px rgba(20, 22, 26, 0.28);
+}
+
+@layer base {
+  :root {
+    --tb-line: #6b7076;
+    --tb-bar: #eceef0;
+  }
+
+  /* dark = turn the room lights off; the page stays lit paper */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --color-paper: #f6f6f3;
+      --color-pasteboard: #131518;
+      --color-panel: #1b1e22;
+      --color-panel-2: #212429;
+
+      --color-ink: #16181b;
+      --color-ink-muted: #4c5157;
+      --color-chrome: #dde1e5;
+      --color-chrome-muted: #969ca4;
+      --color-heading: #edeff1;
+
+      --color-rule: #2e3238;
+      --color-rule-strong: #41474f;
+      --color-cropmark: #7c838c;
+
+      --color-cyan: #37b6df;
+      --color-cyan-line: #2c89a8;
+      --color-cyan-tint: rgba(55, 182, 223, 0.15);
+      --color-on-cyan: #0c1013;
+
+      --color-magenta: #eb6fb4;
+      --color-magenta-tint: rgba(235, 111, 180, 0.16);
+      --color-on-magenta: #160b12;
+
+      --tb-bar: #2a2e33;
+
+      --shadow-page:
+        0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 34px -16px rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  [data-theme='dark'] {
+    --color-paper: #f6f6f3;
+    --color-pasteboard: #131518;
+    --color-panel: #1b1e22;
+    --color-panel-2: #212429;
+
+    --color-ink: #16181b;
+    --color-ink-muted: #4c5157;
+    --color-chrome: #dde1e5;
+    --color-chrome-muted: #969ca4;
+    --color-heading: #edeff1;
+
+    --color-rule: #2e3238;
+    --color-rule-strong: #41474f;
+    --color-cropmark: #7c838c;
+
+    --color-cyan: #37b6df;
+    --color-cyan-line: #2c89a8;
+    --color-cyan-tint: rgba(55, 182, 223, 0.15);
+    --color-on-cyan: #0c1013;
+
+    --color-magenta: #eb6fb4;
+    --color-magenta-tint: rgba(235, 111, 180, 0.16);
+    --color-on-magenta: #160b12;
+
+    --tb-bar: #2a2e33;
+
+    --shadow-page:
+      0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 34px -16px rgba(0, 0, 0, 0.6);
+  }
+
+  html {
+    color-scheme: light dark;
+  }
+  [data-theme='dark'] {
+    color-scheme: dark;
+  }
+  [data-theme='light'] {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100svh;
+    background: var(--color-pasteboard);
+    color: var(--color-chrome);
+    font: 400 14px/1.5 var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  #root {
+    height: 100svh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :where(button, [role='button'], a, input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* ---- repeated text roles ---- */
+
+  .panel-label {
+    @apply font-mono text-[11px] leading-none uppercase tracking-[0.18em] text-chrome-muted;
+  }
+
+  .status {
+    @apply font-mono text-xs leading-normal text-chrome-muted py-2;
+  }
+
+  .error-banner {
+    @apply mt-3 px-3 py-2.5 font-mono text-xs leading-normal text-magenta bg-magenta-tint rounded-[4px];
+    border: 1px solid color-mix(in srgb, var(--color-magenta) 35%, transparent);
+  }
+
+  /* ---- buttons ---- */
+
+  .btn {
+    @apply inline-flex items-center justify-center min-h-8 px-3 py-2 font-sans text-[13px] font-medium leading-none
+      text-chrome bg-panel-2 border border-rule-strong rounded-[4px] cursor-pointer
+      transition-colors duration-100;
+  }
+  .btn:hover:not(:disabled) {
+    @apply border-cyan text-cyan;
+  }
+  .btn:disabled {
+    @apply opacity-45 cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply text-on-cyan bg-cyan border-cyan;
+  }
+  .btn-primary:hover:not(:disabled) {
+    @apply text-on-cyan border-cyan;
+    filter: brightness(1.08);
+  }
+
+  .btn-danger {
+    @apply text-magenta bg-panel-2;
+    border-color: color-mix(in srgb, var(--color-magenta) 45%, transparent);
+  }
+  .btn-danger:hover:not(:disabled) {
+    @apply text-on-magenta bg-magenta border-magenta;
+  }
+
+  .btn-quiet {
+    @apply bg-transparent border-transparent;
+  }
+
+  /* ---- discard-confirm dialog ---- */
+
+  .confirm {
+    @apply flex flex-wrap items-center gap-3 px-3 py-2 bg-magenta-tint rounded-[5px];
+    border: 1px solid color-mix(in srgb, var(--color-magenta) 30%, transparent);
+  }
+  .confirm p {
+    @apply font-mono text-xs leading-snug text-chrome;
+  }
+
+  /* ---- the proof (page on the pasteboard) ---- */
+
+  .proof {
+    @apply relative m-auto p-10;
+  }
+  .proof__page {
+    @apply relative bg-paper shadow-page;
+  }
+  .proof__page canvas {
+    @apply block border border-rule;
+  }
+
+  /* ---- page list ---- */
+
+  .page-rail {
+    @apply list-none m-0 p-0 flex flex-col gap-1.5;
+  }
+  .page-rail li {
+    @apply relative flex flex-wrap gap-1.5 p-2 border border-transparent rounded-[5px];
+  }
+  .page-rail li:hover {
+    @apply bg-panel-2;
+  }
+  .page-rail li:has(button[aria-current='page']) {
+    @apply bg-cyan-tint;
+    border-color: color-mix(in srgb, var(--color-cyan) 40%, transparent);
+  }
+  .page-rail li:has(button[aria-current='page'])::before {
+    content: '';
+    @apply absolute left-0 top-2 bottom-2 w-[3px] rounded-[2px] bg-cyan;
+  }
+
+  .page-rail li > button:first-child {
+    @apply basis-full p-0 border-0 bg-transparent cursor-pointer;
+  }
+  .page-rail li > button:first-child canvas {
+    @apply block w-full h-auto bg-paper border border-rule;
+    box-shadow: 0 1px 2px rgba(20, 22, 26, 0.12);
+  }
+  .page-rail li > button:first-child:hover canvas {
+    @apply border-cyan;
+  }
+  .page-rail li > button:first-child::after {
+    content: attr(aria-label);
+    @apply block mt-1 font-mono text-[11px] leading-none tracking-[0.04em] text-chrome-muted;
+  }
+  .page-rail li:has(button[aria-current='page']) > button:first-child::after {
+    @apply text-cyan;
+  }
+
+  .page-rail li > button:not(:first-child) {
+    @apply grow min-h-6 px-1.5 py-1 font-mono text-[10px] leading-none uppercase tracking-[0.08em]
+      text-chrome bg-panel-2 border border-rule-strong rounded-[3px] opacity-0 cursor-pointer transition-opacity duration-100;
+  }
+  .page-rail li:hover > button:not(:first-child),
+  .page-rail li:focus-within > button:not(:first-child) {
+    @apply opacity-100;
+  }
+  .page-rail li > button:not(:first-child):hover:not(:disabled) {
+    @apply border-cyan text-cyan;
+  }
+  .page-rail li > button:not(:first-child):disabled {
+    @apply opacity-0;
+  }
+  .page-rail li:hover > button[aria-label^='Delete'],
+  .page-rail li:focus-within > button[aria-label^='Delete'] {
+    @apply text-magenta;
+    border-color: color-mix(in srgb, var(--color-magenta) 45%, transparent);
+  }
+  .page-rail li > button[aria-label^='Delete']:hover {
+    @apply bg-magenta border-magenta text-on-magenta;
+  }
+
+  /* ---- text-box overlay ---- */
+
+  .tb button,
+  .tb select,
+  .tb input {
+    @apply min-h-0 px-1 py-0.5 font-mono text-[12px] leading-snug text-chrome bg-panel-2
+      border border-rule-strong rounded-[3px] cursor-pointer;
+  }
+  .tb label {
+    @apply font-mono text-[12px] text-chrome-muted;
+  }
+  .tb button:hover {
+    @apply border-magenta text-magenta;
+  }
+}
+
+/* ============================================================
+   Signature: crop marks and the registration target.
+   Plain CSS: layered gradients and paired pseudo-elements
+   are not worth expressing as utilities.
+   ============================================================ */
+
+.regmark {
+  --s: 18px;
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+  flex: none;
+  color: var(--color-cyan);
+  background:
+    linear-gradient(currentColor, currentColor) center / 100% 1px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 1px 100% no-repeat;
+}
+.regmark::before {
+  content: '';
+  position: absolute;
+  inset: 18%;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+.regmark--lg {
+  --s: 46px;
+}
+.regmark--lg::before {
+  inset: 15%;
+}
+
+.cropmark {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  color: var(--color-cropmark);
+}
+.cropmark::before,
+.cropmark::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+}
+.cropmark::before {
+  width: 14px;
+  height: 1px;
+}
+.cropmark::after {
+  width: 1px;
+  height: 14px;
+}
+.cropmark--tl {
+  top: -9px;
+  left: -9px;
+}
+.cropmark--tl::before,
+.cropmark--tl::after {
+  top: 0;
+  left: 0;
+}
+.cropmark--tr {
+  top: -9px;
+  right: -9px;
+}
+.cropmark--tr::before,
+.cropmark--tr::after {
+  top: 0;
+  right: 0;
+}
+.cropmark--bl {
+  bottom: -9px;
+  left: -9px;
+}
+.cropmark--bl::before,
+.cropmark--bl::after {
+  bottom: 0;
+  left: 0;
+}
+.cropmark--br {
+  bottom: -9px;
+  right: -9px;
+}
+.cropmark--br::before,
+.cropmark--br::after {
+  bottom: 0;
+  right: 0;
+}
+
+/* ---- entry-screen load sequence ---- */
+
+.anim-sheet {
+  animation: sheet-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.anim-sheet .regmark--lg {
+  animation: reg-in 0.45s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.anim-sheet .cropmark {
+  animation: crop-in 0.3s 0.35s ease both;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes crop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes reg-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- page list: horizontal filmstrip on narrow screens ---- */
+
+@media (max-width: 720px) {
+  .page-rail {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+  .page-rail li {
+    flex: 0 0 128px;
+  }
+}
