@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react'
 import { pdfToScreen, screenToPdf, type ScreenRect } from '../../pdf/coordinates'
 import { FONT_FAMILIES, isFontFamily, type TextBoxAnnotation } from '../../pdf/types'
 
@@ -172,6 +172,21 @@ export function TextBoxItem({
     annotation.widthPt,
   )} by ${Math.round(annotation.heightPt)} pt`
 
+  // Not enough room above the box for a two-row toolbar: hang it below instead
+  // so it never covers, or gets squeezed against, the text field.
+  const toolbarBelow = rect.screenY < 70
+  const toolbarRowStyle: CSSProperties = {
+    display: 'flex',
+    flexWrap: 'nowrap',
+    alignItems: 'center',
+    gap: 4,
+    fontSize: 12,
+    whiteSpace: 'nowrap',
+    background: 'var(--tb-bar, #eceef0)',
+    padding: '2px 4px',
+    width: 'max-content',
+  }
+
   return (
     <div
       className="tb"
@@ -179,8 +194,6 @@ export function TextBoxItem({
       aria-label={`Text box ${index}`}
       style={{
         position: 'absolute',
-        display: 'flex',
-        flexDirection: 'column',
         left: rect.screenX,
         top: rect.screenY,
         width: rect.screenWidth,
@@ -188,84 +201,102 @@ export function TextBoxItem({
         border: '1px solid var(--tb-line, #6b7076)',
       }}
     >
+      {/* Floating toolbar: sits outside the box's own height so it never
+          crowds out the text field underneath. */}
       <div
         style={{
+          position: 'absolute',
+          left: 0,
+          ...(toolbarBelow ? { top: '100%', marginTop: 2 } : { bottom: '100%', marginBottom: 2 }),
           display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          gap: 4,
-          fontSize: 12,
-          background: 'var(--tb-bar, #eceef0)',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: 2,
+          zIndex: 2,
         }}
       >
-        <div
-          onPointerDown={startMove}
-          aria-hidden="true"
-          style={{ cursor: 'move', padding: '0 4px' }}
-        >
-          ⠿
+        <div style={toolbarRowStyle}>
+          <div
+            onPointerDown={startMove}
+            aria-hidden="true"
+            style={{ cursor: 'move', padding: '0 4px' }}
+          >
+            ⠿
+          </div>
+          <label htmlFor={`${idPrefix}-font`}>Font</label>
+          <select
+            id={`${idPrefix}-font`}
+            value={annotation.fontFamily}
+            onChange={(e) => {
+              const value = e.target.value
+              if (isFontFamily(value)) onChangeFont(annotation.id, value)
+            }}
+          >
+            {FONT_FAMILIES.map((font) => (
+              <option key={font} value={font}>
+                {font}
+              </option>
+            ))}
+          </select>
+          <label htmlFor={`${idPrefix}-size`}>Size</label>
+          <input
+            id={`${idPrefix}-size`}
+            type="number"
+            min={MIN_FONT_SIZE_PT}
+            max={MAX_FONT_SIZE_PT}
+            value={annotation.fontSizePt}
+            style={{ width: 48 }}
+            onChange={(e) => handleFontSize(e.target.value)}
+          />
+          <label htmlFor={`${idPrefix}-color`} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            Color
+            <input
+              id={`${idPrefix}-color`}
+              type="color"
+              value={rgbToHex(annotation.colorRgb)}
+              onChange={(e) => onChangeColor(annotation.id, hexToRgb(e.target.value))}
+              style={{ width: 24, height: 20, padding: 0 }}
+            />
+          </label>
+          <button type="button" onClick={() => onDelete(annotation.id)} aria-label={`Delete text box ${index}`}>
+            Delete
+          </button>
         </div>
-        <label htmlFor={`${idPrefix}-font`}>Font</label>
-        <select
-          id={`${idPrefix}-font`}
-          value={annotation.fontFamily}
-          onChange={(e) => {
-            const value = e.target.value
-            if (isFontFamily(value)) onChangeFont(annotation.id, value)
-          }}
-        >
-          {FONT_FAMILIES.map((font) => (
-            <option key={font} value={font}>
-              {font}
-            </option>
-          ))}
-        </select>
-        <label htmlFor={`${idPrefix}-size`}>Size</label>
-        <input
-          id={`${idPrefix}-size`}
-          type="number"
-          min={MIN_FONT_SIZE_PT}
-          max={MAX_FONT_SIZE_PT}
-          value={annotation.fontSizePt}
-          onChange={(e) => handleFontSize(e.target.value)}
-        />
-        <label htmlFor={`${idPrefix}-color`}>Color</label>
-        <input
-          id={`${idPrefix}-color`}
-          type="color"
-          value={rgbToHex(annotation.colorRgb)}
-          onChange={(e) => onChangeColor(annotation.id, hexToRgb(e.target.value))}
-        />
-        <button type="button" onClick={() => onDelete(annotation.id)} aria-label={`Delete text box ${index}`}>
-          Delete
-        </button>
-      </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, padding: '2px 4px' }}>
-        <button type="button" onClick={() => nudge(-NUDGE_PT, 0)} aria-label={`Move text box ${index} left`}>
-          ◄
-        </button>
-        <button type="button" onClick={() => nudge(NUDGE_PT, 0)} aria-label={`Move text box ${index} right`}>
-          ►
-        </button>
-        <button type="button" onClick={() => nudge(0, NUDGE_PT)} aria-label={`Move text box ${index} up`}>
-          ▲
-        </button>
-        <button type="button" onClick={() => nudge(0, -NUDGE_PT)} aria-label={`Move text box ${index} down`}>
-          ▼
-        </button>
-        <button type="button" onClick={() => resize(RESIZE_PT, 0)} aria-label={`Make text box ${index} wider`}>
-          W+
-        </button>
-        <button type="button" onClick={() => resize(-RESIZE_PT, 0)} aria-label={`Make text box ${index} narrower`}>
-          W−
-        </button>
-        <button type="button" onClick={() => resize(0, RESIZE_PT)} aria-label={`Make text box ${index} taller`}>
-          H+
-        </button>
-        <button type="button" onClick={() => resize(0, -RESIZE_PT)} aria-label={`Make text box ${index} shorter`}>
-          H−
-        </button>
+        <div style={toolbarRowStyle}>
+          <button type="button" onClick={() => nudge(-NUDGE_PT, 0)} aria-label={`Move text box ${index} left`}>
+            ◄
+          </button>
+          <button type="button" onClick={() => nudge(NUDGE_PT, 0)} aria-label={`Move text box ${index} right`}>
+            ►
+          </button>
+          <button type="button" onClick={() => nudge(0, NUDGE_PT)} aria-label={`Move text box ${index} up`}>
+            ▲
+          </button>
+          <button type="button" onClick={() => nudge(0, -NUDGE_PT)} aria-label={`Move text box ${index} down`}>
+            ▼
+          </button>
+          <button type="button" onClick={() => resize(RESIZE_PT, 0)} aria-label={`Make text box ${index} wider`}>
+            W+
+          </button>
+          <button
+            type="button"
+            onClick={() => resize(-RESIZE_PT, 0)}
+            aria-label={`Make text box ${index} narrower`}
+          >
+            W−
+          </button>
+          <button type="button" onClick={() => resize(0, RESIZE_PT)} aria-label={`Make text box ${index} taller`}>
+            H+
+          </button>
+          <button
+            type="button"
+            onClick={() => resize(0, -RESIZE_PT)}
+            aria-label={`Make text box ${index} shorter`}
+          >
+            H−
+          </button>
+        </div>
       </div>
 
       <textarea
@@ -275,8 +306,7 @@ export function TextBoxItem({
         aria-label={`Text box ${index} content`}
         style={{
           width: '100%',
-          flex: 1,
-          minHeight: 0,
+          height: '100%',
           fontSize: annotation.fontSizePt * scale,
           lineHeight: 1.15,
           color: rgbToHex(annotation.colorRgb),
